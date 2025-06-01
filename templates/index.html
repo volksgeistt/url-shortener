@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener - Make Links Shorter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #8b5cf6;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --white: #ffffff;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --border-radius: 16px;
+            --border-radius-lg: 24px;
+            --transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            --transition-fast: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+            --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            line-height: 1.6;
+            color: var(--gray-700);
+            position: relative;
+            overflow-x: hidden;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            pointer-events: none;
+            animation: backgroundFloat 8s ease-in-out infinite;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius-lg);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 32rem;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 1;
+            transition: var(--transition);
+            animation: slideUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .container:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 35px 70px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: headerSlide 1s cubic-bezier(0.25, 0.1, 0.25, 1) 0.2s both;
+        }
+
+        @keyframes headerSlide {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            width: 4rem;
+            height: 4rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.3);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(-45deg);
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 12px 24px -4px rgba(99, 102, 241, 0.4);
+        }
+
+        .logo:hover::before {
+            animation: logoShine 0.6s ease-in-out;
+        }
+
+        @keyframes logoShine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(-45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(-45deg); }
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, var(--gray-900) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--gray-500);
+            font-size: 1rem;
+            font-weight: 400;
+            opacity: 0;
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) 0.4s both;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) 0.6s both;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+            transition: var(--transition-fast);
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--transition);
+            background: var(--white);
+            color: var(--gray-900);
+            position: relative;
+        }
+
+        .url-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .url-input:hover:not(:focus) {
+            border-color: var(--gray-300);
+            transform: translateY(-1px);
+        }
+
+        .url-input::placeholder {
+            color: var(--gray-400);
+            transition: var(--transition-fast);
+        }
+
+        .url-input:focus::placeholder {
+            opacity: 0.5;
+            transform: translateX(4px);
+        }
+
+        .shorten-btn {
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.3);
+        }
+
+        .shorten-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease-in-out;
+        }
+
+        .shorten-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 24px -4px rgba(99, 102, 241, 0.5);
+        }
+
+        .shorten-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .shorten-btn:active:not(:disabled) {
+            transform: translateY(0) scale(0.98);
+            transition: var(--transition-fast);
+        }
+
+        .shorten-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+            margin: 1rem 0;
+        }
+
+        .loading.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid var(--gray-200);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result-container {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            display: none;
+            transition: var(--transition);
+        }
+
+        .result-container.show {
+            display: block;
+            animation: slideInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes slideInBounce {
+            0% { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.8); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .result-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            margin-bottom: 0.75rem;
+        }
+
+        .result-url {
+            background: var(--white);
+            padding: 0.875rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+            font-size: 0.875rem;
+            word-break: break-all;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            position: relative;
+            transition: var(--transition-fast);
+        }
+
+        .result-url:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: scale(1.02);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .copy-btn, .visit-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .copy-btn {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .copy-btn:hover:not(.copied) {
+            background: #059669;
+            transform: translateY(-1px) scale(1.05);
+        }
+
+        .copy-btn.copied {
+            background: var(--gray-500);
+            animation: successPulse 0.6s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .visit-btn {
+            background: var(--white);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .visit-btn:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateY(-1px) scale(1.05);
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            border-radius: var(--border-radius);
+            padding: 0.875rem;
+            margin: 1rem 0;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: errorShake 0.6s ease-out;
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .footer {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            text-align: center;
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) 0.8s both;
+        }
+
+        .stats {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: var(--white);
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px -2px rgba(99, 102, 241, 0.3);
+            transition: var(--transition);
+            cursor: default;
+        }
+
+        .stats:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.4);
+        }
+
+        .credits {
+            font-size: 0.75rem;
+            color: black;
+            font-weight: 400;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem 0.75rem;
+            }
+
+            .container {
+                padding: 2rem 1.5rem;
+                max-width: calc(100vw - 1.5rem);
+                border-radius: var(--border-radius);
+            }
+
+            .container:hover {
+                transform: translateY(-2px) scale(1.01);
+            }
+
+            .title {
+                font-size: 1.5rem;
+            }
+
+            .subtitle {
+                font-size: 0.875rem;
+            }
+
+            .logo {
+                width: 3rem;
+                height: 3rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .copy-btn, .visit-btn {
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-text">🔗</div>
+            </div>
+            <h1 class="title">URL Shortener</h1>
+            <p class="subtitle">Transform long URLs into short, shareable links</p>
+        </div>
+        
+        <div class="form-section" id="formSection">
+            <div class="input-group">
+                <label for="urlInput" class="input-label">Enter your URL</label>
+                <input type="url" class="url-input" id="urlInput" placeholder="https://example.com/very-long-url" autocomplete="url" />
+            </div>
+            
+            <button class="shorten-btn" id="shortenBtn" type="button">
+                <span>Shorten URL</span>
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Creating your short link...</span>
+        </div>
+        
+        <div class="error-message" id="errorMessage" role="alert"></div>
+        
+        <div class="result-container" id="resultContainer">
+            <div class="result-label">Your shortened URL is ready!</div>
+            <div class="result-url" id="shortUrl"></div>
+            <div class="action-buttons">
+                <button class="copy-btn" id="copyBtn" type="button">Copy Link</button>
+                <button class="visit-btn" id="visitBtn" type="button">Visit Link</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="stats" id="statsDisplay">Total Shortened URLs - 0</div>
+            <div class="credits">Made with ❤️ by Ujjawal Singh</div>
+        </div>
+    </div>
+
+    <script> 
+const urlInput = document.getElementById('urlInput');
+const shortenBtn = document.getElementById('shortenBtn');
+const formSection = document.getElementById('formSection');
+const loading = document.getElementById('loading');
+const errorMessage = document.getElementById('errorMessage');
+const resultContainer = document.getElementById('resultContainer');
+const shortUrl = document.getElementById('shortUrl');
+const copyBtn = document.getElementById('copyBtn');
+const visitBtn = document.getElementById('visitBtn');
+const statsDisplay = document.getElementById('statsDisplay');
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadStats();
+    initializeEventListeners();
+});
+
+async function loadStats() {
+    try {
+        const response = await fetch('/stats');
+        const data = await response.json();
+        updateStatsDisplay(data.total_count || 0);
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        updateStatsDisplay(0);
+    }
+}
+
+function updateStatsDisplay(count) {
+    const currentCount = parseInt(statsDisplay.textContent.match(/\d+/)?.[0] || '0');
+    animateCounter(currentCount, count);
+}
+
+function animateCounter(start, end) {
+    const duration = 1000;
+    const steps = 60;
+    const increment = (end - start) / steps;
+    let current = start;
+    let step = 0;
+
+    const timer = setInterval(() => {
+        current += increment;
+        step++;
+        
+        statsDisplay.textContent = `Total Shortened URLs - ${Math.floor(current).toLocaleString()}`;
+        
+        if (step >= steps) {
+            clearInterval(timer);
+            statsDisplay.textContent = `Total Shortened URLs - ${end.toLocaleString()}`;
+        }
+    }, duration / steps);
+}
+
+function hideAll() {
+    loading.classList.remove('show');
+    errorMessage.classList.remove('show');
+    resultContainer.classList.remove('show');
+    formSection.classList.remove('loading');
+}
+
+function showError(message) {
+    hideAll();
+    errorMessage.textContent = message;
+    errorMessage.classList.add('show');
+    
+    urlInput.style.animation = 'errorShake 0.6s ease-out';
+    setTimeout(() => {
+        urlInput.style.animation = '';
+    }, 600);
+}
+
+function showResult(url) {
+    hideAll();
+    shortUrl.textContent = url;
+    resultContainer.classList.add('show');
+    
+    setTimeout(() => {
+        resultContainer.classList.add('success-glow');
+        setTimeout(() => {
+            resultContainer.classList.remove('success-glow');
+        }, 1000);
+    }, 100);
+    
+    copyBtn.textContent = 'Copy Link';
+    copyBtn.classList.remove('copied');
+    
+    visitBtn.onclick = () => {
+        visitBtn.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            visitBtn.style.transform = '';
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }, 100);
+    };
+}
+
+async function shortenUrl() {
+    const url = urlInput.value.trim();
+    
+    if (!url) {
+        showError('Please enter a URL to shorten');
+        urlInput.focus();
+        return;
+    }
+
+    try {
+        const urlObj = new URL(url.startsWith('http') ? url : 'https://' + url);
+        if (!['http:', 'https:'].includes(urlObj.protocol)) {
+            throw new Error('Invalid protocol');
+        }
+    } catch {
+        showError('Please enter a valid URL (include http:// or https://)');
+        urlInput.focus();
+        return;
+    }
+
+    hideAll();
+    formSection.classList.add('loading');
+    loading.classList.add('show');
+    shortenBtn.disabled = true;
+
+    try {
+        const response = await fetch('/shorten', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: url })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to shorten URL');
+        }
+
+        showResult(data.short_url);
+        
+        updateStatsDisplay(data.total_count);
+        
+        setTimeout(() => {
+            urlInput.value = '';
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showError(error.message || 'Failed to shorten URL. Please try again.');
+    } finally {
+        setTimeout(() => {
+            loading.classList.remove('show');
+            formSection.classList.remove('loading');
+            shortenBtn.disabled = false;
+        }, 500);
+    }
+}
+
+async function copyToClipboard() {
+    const urlText = shortUrl.textContent;
+    
+    try {
+        await navigator.clipboard.writeText(urlText);
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('copied');
+        
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        
+        copyBtn.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            copyBtn.style.transform = '';
+        }, 100);
+        
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy Link';
+            copyBtn.classList.remove('copied');
+        }, 2500);
+        
+    } catch (error) {
+        console.error('Failed to copy:', error);
+        
+        const textArea = document.createElement('textarea');
+        textArea.value = urlText;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        textArea.style.opacity = '0';
+        textArea.style.pointerEvents = 'none';
+        document.body.appendChild(textArea);
+        
+        try {
+            textArea.select();
+            textArea.setSelectionRange(0, 99999);
+            
+            const successful = document.execCommand('copy');
+            if (successful) {
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy Link';
+                    copyBtn.classList.remove('copied');
+                }, 2500);
+            } else {
+                throw new Error('Copy command failed');
+            }
+        } catch (fallbackError) {
+            showError('Failed to copy. Please copy manually.');
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+}
+
+function initializeEventListeners() {
+    shortenBtn.addEventListener('click', shortenUrl);
+    copyBtn.addEventListener('click', copyToClipboard);
+
+    urlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!shortenBtn.disabled) {
+                shortenUrl();
+            }
+        }
+    });
+
+    urlInput.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        
+        if (value === '') {
+            if (resultContainer.classList.contains('show') || errorMessage.classList.contains('show')) {
+                hideAll();
+            }
+        }
+    });
+
+    urlInput.addEventListener('focus', () => {
+        const label = urlInput.parentElement.querySelector('.input-label');
+        if (label) {
+            label.style.color = 'var(--primary)';
+        }
+    });
+
+    urlInput.addEventListener('blur', () => {
+        const label = urlInput.parentElement.querySelector('.input-label');
+        if (label) {
+            label.style.color = '';
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            urlInput.focus();
+            urlInput.select();
+        }
+        
+        if (e.key === 'Escape') {
+            if (resultContainer.classList.contains('show') || errorMessage.classList.contains('show')) {
+                hideAll();
+                urlInput.focus();
+            }
+        }
+    });
+
+    statsDisplay.addEventListener('click', () => {
+        statsDisplay.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            statsDisplay.style.transform = '';
+            loadStats();
+        }, 100);
+    });
+}
+
+const style = document.createElement('style');
+style.textContent = `
+    .result-container.success-glow {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        animation: successGlow 1s ease-out;
+    }
+
+    @keyframes successGlow {
+        0% { box-shadow: 0 0 0 rgba(16, 185, 129, 0); }
+        50% { box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
+        100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+    }
+`;
+document.head.appendChild(style);
+    </script>
+</body>
+</html>
